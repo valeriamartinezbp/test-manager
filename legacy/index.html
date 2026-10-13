@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proceso de QA · BluePixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<nav class="nav" aria-label="Secciones">
+  <div class="wrap">
+    <div class="brand">Blue<span>Pixel</span> QA</div>
+    <a href="#mapa">Mapa</a><a href="#detalle">Detalle de fase</a><a href="#defectos">Defectos</a><a href="#roles">Roles</a><a href="#kpis">KPIs</a><a href="#escalamiento">Escalamiento</a>
+    <div class="sp"></div>
+    <button class="theme" id="theme" type="button">Cambiar tema</button>
+  </div>
+</nav>
+
+<header class="wrap hero" id="mapa">
+  <h1>El proceso de QA, fase por fase</h1>
+  <p class="lead">Del PRD al sign-off: cinco fases, seis quality gates y dos procesos que corren en paralelo. Toca una fase del mapa para ver sus pasos, responsables, entregables y excepciones.</p>
+  <div class="legend"><span><i class="lg-st"></i>Fase (abre el detalle)</span><span><i class="lg-gt"></i>Quality gate (muestra la condición de paso)</span></div>
+
+  <div class="mapbox">
+    <div class="map" id="map">
+      <div class="track" aria-hidden="true"><b id="trackfill"></b></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="wrap blk" id="detalle" aria-live="polite">
+  <div class="card" id="dcard"></div>
+</section>
+
+<section class="wrap blk" id="defectos">
+  <div class="sh"><h2>Ciclo de vida de un defecto</h2><p>Aplica a hallazgos en UI, API, SIT y UAT (SOP-QA-008). Toca un estado para ver quién actúa, o simula el recorrido de un defecto.</p></div>
+  <div class="dgrid">
+    <div class="card">
+      <div class="dsvg">
+        <svg id="dsvg" viewBox="0 0 1000 400" role="group" aria-label="Diagrama de estados del defecto: Reportado, Triaje, En análisis, En corrección, Retest; si pasa, Cerrado; si persiste, Reabierto y vuelve a corrección">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" style="fill:var(--muted)"/></marker>
+            <marker id="aho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--signal)"/></marker>
+          </defs>
+          <path class="edge" d="M180 75H206" marker-end="url(#ah)"/>
+          <path class="edge" d="M380 75H406" marker-end="url(#ah)"/>
+          <path class="edge" d="M580 75H606" marker-end="url(#ah)"/>
+          <path class="edge" d="M780 75H806" marker-end="url(#ah)"/>
+          <path class="edge" d="M920 115V266" marker-end="url(#ah)"/>
+          <path class="edge o" d="M835 115V305H784" marker-end="url(#aho)"/>
+          <path class="edge o" d="M695 270V119" marker-end="url(#aho)"/>
+          <text class="elab" x="930" y="200">Pasa</text>
+          <text class="elab" x="705" y="200" style="fill:var(--signal-text)">Persiste</text>
+          <g id="nodes"></g>
+          <circle class="token" id="token" r="11" cx="0" cy="0" style="transform:translate(95px,40px)"/>
+        </svg>
+      </div>
+      <div class="dctrl"><button class="btn pri" id="sim" type="button">Simular un defecto</button><button class="btn" id="simstop" type="button">Reiniciar</button></div>
+      <p class="log" id="simlog">El punto naranja representa un defecto. Pulsa “Simular un defecto” para verlo avanzar.</p>
+    </div>
+    <div class="card dside" id="dside"></div>
+  </div>
+  <div class="card sev">
+    <h3 style="font-size:24px">Severidad y tiempos de respuesta</h3>
+    <div class="sevbtns" id="sevbtns"></div>
+    <div class="bars" id="bars"></div>
+    <p class="sevnote" id="sevnote"></p>
+  </div>
+</section>
+
+<section class="wrap blk" id="roles">
+  <div class="sh"><h2>Roles y responsabilidades</h2><p>Toca un rol para leer su responsabilidad, o el nombre de una fase para abrir su detalle.</p></div>
+  <div class="card">
+    <div class="rleg"><span><i class="let R">R</i>Ejecuta</span><span><i class="let A">A</i>Aprueba o firma</span><span><i class="let P">P</i>Participa o apoya</span><span><i class="let E">E</i>Recibe escalamientos</span></div>
+    <div class="raci"><table id="raci"></table></div>
+    <div class="rinfo" id="rinfo"></div>
+  </div>
+</section>
+
+<section class="wrap blk" id="kpis">
+  <div class="sh"><h2>Simulador de sign-off</h2><p>Escribe los números de tu ciclo y comprueba si cumple los KPIs del SOP-QA-009 y los gates de salida de SIT y UAT.</p></div>
+  <div class="card ksim">
+    <div class="kin" id="kin">
+      <h3>Datos del ciclo</h3>
+      <label>Casos planificados <input type="number" min="0" id="k-plan" value="120"></label>
+      <label>Casos exitosos (Pass) <input type="number" min="0" id="k-pass" value="104"></label>
+      <label>Defectos detectados en QA <input type="number" min="0" id="k-qa" value="46"></label>
+      <label>Defectos en producción <input type="number" min="0" id="k-prod" value="4"></label>
+      <label>Defectos marcados corregidos <input type="number" min="0" id="k-fix" value="40"></label>
+      <label>Defectos reabiertos <input type="number" min="0" id="k-re" value="3"></label>
+      <label>Críticos o altos abiertos <input type="number" min="0" id="k-crit" value="0"></label>
+    </div>
+    <div class="kout" id="kout"></div>
+  </div>
+</section>
+
+<section class="wrap blk" id="escalamiento">
+  <div class="sh"><h2>¿A quién se escala?</h2><p>Elige la situación y sigue la ruta. Todo escalamiento se registra en el acta de la sesión y en la Matriz de Riesgos.</p></div>
+  <div class="card esc">
+    <div class="trig" id="trig"></div>
+    <div class="route" id="route"></div>
+  </div>
+</section>
+
+<section class="wrap blk">
+  <div class="rules">
+    <h2>Cinco reglas que no se negocian</h2>
+    <div class="rule"><b>1</b><span>Nunca se usan datos reales: todo dato de prueba se enmascara y anonimiza.</span></div>
+    <div class="rule"><b>2</b><span>La suite queda trazada al 100% con historias de usuario antes de ejecutar.</span></div>
+    <div class="rule"><b>3</b><span>UAT solo inicia con cero defectos críticos o altos abiertos en SIT.</span></div>
+    <div class="rule"><b>4</b><span>No se firma el acta UAT con defectos críticos o altos abiertos.</span></div>
+    <div class="rule"><b>5</b><span>Nada se despliega sin el sign-off formal de QA y los KPIs en meta.</span></div>
+  </div>
+</section>
+</main>
+<footer class="wrap">Fuente: SOP-QA-001 a SOP-QA-009 de BluePixel, versión 0.1, en vigor desde el 29-jul-2026. La matriz de responsabilidades y los estados intermedios de defectos se derivan de los pasos de cada SOP.</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Referencia estática original: no se modifica
+legacy/
+
+# Generado
+.next/
+out/
+build/
+node_modules/
+package-lock.json
+next-env.d.ts
+AGENTS.md
+
+# Componentes generados por shadcn/ui (se regeneran con `npx shadcn add`)
+src/components/ui/
