@@ -17,7 +17,7 @@ roles, KPIs y escalamiento) basado en los SOP-QA-001 a SOP-QA-009.
 
 ## Ejecutar en local
 
-Requiere Node.js 20.9 o superior.
+Requiere Node.js 24 (ver `.nvmrc`; con nvm: `nvm use`).
 
 ```bash
 npm install
@@ -44,7 +44,7 @@ La versión estática original puede verse con `npx serve legacy`.
 .
 ├── legacy/                   # Sitio estático original (referencia, no se modifica)
 ├── src/
-│   ├── app/                  # Rutas: "/" y "/proceso"
+│   ├── app/                  # Rutas: "/", "/proceso" y "/estilos" (solo desarrollo)
 │   ├── components/
 │   │   ├── ui/               # Componentes shadcn/ui (generados)
 │   │   └── layout/           # Nav, footer, theme toggle
@@ -58,7 +58,7 @@ La versión estática original puede verse con `npx serve legacy`.
 
 ## Integración continua
 
-Cada `push` y `pull_request` a `main` ejecuta `npm ci`, lint, typecheck, `format:check` y build con Node 20.
+Cada `push` y `pull_request` a `main` ejecuta `npm ci`, lint, typecheck, `format:check` y build con Node 24 (versión tomada de `.nvmrc`).
 
 ## Convención de commits
 
