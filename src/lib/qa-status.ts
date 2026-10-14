@@ -56,6 +56,18 @@ export const DEFECT_STATUSES = [
 ] as const;
 export type DefectStatus = (typeof DEFECT_STATUSES)[number];
 
+/**
+ * Estados que cuentan como defecto abierto (riesgo, quality gates).
+ * Fuera: cerrado, rechazado, duplicado y diferido (pospuesto a propósito).
+ */
+export const OPEN_DEFECT_STATUSES = [
+  "nuevo",
+  "asignado",
+  "en_curso",
+  "re_test",
+  "reabierto",
+] as const satisfies readonly DefectStatus[];
+
 export const RUN_STATUSES = [
   "borrador",
   "en_curso",
@@ -66,6 +78,33 @@ export type RunStatus = (typeof RUN_STATUSES)[number];
 
 export const TRAFFIC_LIGHTS = ["en_meta", "atencion", "fuera_de_meta"] as const;
 export type TrafficLight = (typeof TRAFFIC_LIGHTS)[number];
+
+export const RISK_LEVELS = ["alto", "medio", "bajo"] as const;
+export type RiskLevel = (typeof RISK_LEVELS)[number];
+
+/** Fase de QA de un proyecto (portafolio). No es un estado: solo etiqueta. */
+export const QA_PHASES = [
+  "planeacion",
+  "diseno",
+  "preparacion_datos",
+  "ejecucion",
+  "regresion",
+  "rendimiento",
+  "uat",
+  "cierre",
+] as const;
+export type QaPhase = (typeof QA_PHASES)[number];
+
+export const QA_PHASE_LABELS: Readonly<Record<QaPhase, string>> = {
+  planeacion: "Planeación",
+  diseno: "Diseño",
+  preparacion_datos: "Preparación de datos",
+  ejecucion: "Ejecución de casos",
+  regresion: "Pruebas de regresión",
+  rendimiento: "Pruebas de rendimiento",
+  uat: "UAT",
+  cierre: "Cierre",
+};
 
 /** Tokens semánticos definidos en src/app/globals.css. */
 export const QA_TOKENS = [
@@ -100,6 +139,7 @@ type QaValueByDomain = {
   defectStatus: DefectStatus;
   runStatus: RunStatus;
   trafficLight: TrafficLight;
+  riskLevel: RiskLevel;
 };
 
 export type QaDomain = keyof QaValueByDomain;
@@ -113,6 +153,7 @@ export const QA_DOMAIN_VALUES: {
   defectStatus: DEFECT_STATUSES,
   runStatus: RUN_STATUSES,
   trafficLight: TRAFFIC_LIGHTS,
+  riskLevel: RISK_LEVELS,
 };
 
 export const QA_STATUS: {
@@ -172,6 +213,11 @@ export const QA_STATUS: {
       icon: OctagonX,
       token: "status-critical",
     },
+  },
+  riskLevel: {
+    alto: { label: "Alto", icon: OctagonAlert, token: "status-critical" },
+    medio: { label: "Medio", icon: TriangleAlert, token: "status-warning" },
+    bajo: { label: "Bajo", icon: CircleCheck, token: "status-good" },
   },
 };
 

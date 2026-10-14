@@ -10,18 +10,31 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:focus": "node scripts/check-focus.mjs"
+    "check:focus": "node scripts/check-focus.mjs",
+    "postinstall": "prisma generate",
+    "test": "vitest run",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force && prisma db seed",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@prisma/adapter-mariadb": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "dotenv": "^18.0.8",
     "lucide-react": "^1.56.0",
     "next": "16.4.0",
     "next-themes": "^0.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "tw-animate-css": "^1.4.0"
+    "server-only": "^0.0.1",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -32,8 +45,16 @@
     "eslint-config-next": "16.4.0",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "prisma": "^7.10.0",
     "shadcn": "^4.21.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.4"
+  },
+  "overrides": {
+    "mariadb": "3.5.4",
+    "mysql2": "3.24.6"
+  },
+  "type": "module"
 }

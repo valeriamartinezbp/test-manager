@@ -12,3 +12,7 @@ AGENTS.md
 
 # Componentes generados por shadcn/ui (se regeneran con `npx shadcn add`)
 src/components/ui/
+
+# Cliente de Prisma generado
+src/server/generated/
+prisma/migrations/

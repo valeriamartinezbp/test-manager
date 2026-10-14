@@ -1,0 +1,1053 @@
+// Esquema del QA Center + Test Manager.
+// Convenciones: modelos en inglés (PascalCase), tablas en snake_case (@@map),
+// enums con los valores del vocabulario (src/lib/qa-status.ts). Todas las fechas en UTC;
+// los campos de solo fecha usan @db.Date. Ver CLAUDE.md › Base de datos.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/server/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+// Vocabulario compartido con src/lib/qa-status.ts (no renombrar sin migración)
+enum TestResult {
+  sin_ejecutar
+  aprobado
+  fallido
+  bloqueado
+  omitido
+}
+
+enum Severity {
+  critica
+  alta
+  media
+  baja
+}
+
+enum DefectStatus {
+  nuevo
+  asignado
+  en_curso
+  re_test
+  cerrado
+  reabierto
+  diferido
+  rechazado
+  duplicado
+}
+
+enum RunStatus {
+  borrador
+  en_curso
+  pausada
+  completada
+}
+
+enum RiskLevel {
+  alto
+  medio
+  bajo
+}
+
+enum QaPhase {
+  planeacion
+  diseno
+  preparacion_datos
+  ejecucion
+  regresion
+  rendimiento
+  uat
+  cierre
+}
+
+// Personas y accesos
+enum UserStatus {
+  activo
+  pendiente
+  suspendido
+}
+
+enum PermissionEffect {
+  otorgar
+  quitar
+}
+
+// Test Manager
+enum RequirementStatus {
+  borrador
+  aprobado
+  en_desarrollo
+  listo
+  liberado
+}
+
+enum TestLevel {
+  ui
+  api
+  sit
+  uat
+}
+
+enum TestType {
+  funcional
+  regresion
+  smoke
+  integracion
+  rendimiento
+  seguridad
+  usabilidad
+}
+
+enum Platform {
+  web
+  ios
+  android
+  api
+  escritorio
+}
+
+enum Priority {
+  alta
+  media
+  baja
+}
+
+enum ReviewStatus {
+  aprobado
+  pendiente_revision
+  devuelto
+}
+
+enum CycleStatus {
+  planeado
+  en_curso
+  cerrado
+}
+
+enum RunType {
+  smoke
+  regresion
+  funcional
+  sanity
+  uat
+  exploratoria
+}
+
+enum Environment {
+  qa
+  sit
+  uat
+  staging
+  produccion
+}
+
+enum SmokeVerdict {
+  certificado
+  rechazado
+}
+
+// Defectos
+enum DefectOrigin {
+  equipo_qa
+  cliente_uat
+  ci
+  agente
+}
+
+enum RootCause {
+  por_definir
+  requisitos
+  diseno
+  logica_codigo
+  entorno_config
+  datos_migracion
+  integracion_api
+  proceso_cobertura
+}
+
+// Fase de inyección y de detección (contención por fase)
+enum SdlcPhase {
+  requisitos
+  diseno
+  desarrollo
+  ui
+  api
+  sit
+  uat
+  produccion
+}
+
+// Releases y portafolio
+enum ReleaseType {
+  mayor
+  menor
+  parche
+}
+
+enum ReleaseStatus {
+  planeada
+  en_desarrollo
+  en_pruebas
+  lista
+  liberada
+  fallida
+  pospuesta
+}
+
+enum GoDecision {
+  go
+  no_go
+}
+
+enum DeploymentStatus {
+  exitoso
+  con_errores
+  en_progreso
+  rollback
+}
+
+enum ProdApproval {
+  si
+  no
+  pendiente
+}
+
+enum ScopeChangeType {
+  nueva_funcionalidad
+  mejora
+  correccion
+  cambio_alcance
+}
+
+enum ScopeChangeStatus {
+  en_analisis
+  aprobado
+  rechazado
+  en_qa
+  liberado
+}
+
+// Configuración, documentos y mejoras
+enum MetricDirection {
+  alto
+  bajo
+}
+
+enum DocumentType {
+  estrategia
+  test_plan
+  informe_cierre
+  acta_signoff
+  otro
+}
+
+enum DocumentStatus {
+  borrador
+  en_revision
+  aprobado
+}
+
+enum ImprovementStatus {
+  propuesta
+  en_analisis
+  aprobada
+  en_curso
+  hecha
+  descartada
+}
+
+// ─────────────────────── Personas y accesos ───────────────────────
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  status    UserStatus @default(pendiente)
+  isOwner   Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  memberships          Membership[]
+  ledProjects          Project[]           @relation("ProjectQaLead")
+  authoredTestCases    TestCase[]          @relation("TestCaseAuthor")
+  takenRuns            TestRun[]           @relation("TestRunTakenBy")
+  executedRunCases     TestRunCase[]       @relation("TestRunCaseExecutor")
+  assignedDefects      Defect[]            @relation("DefectAssignee")
+  reportedDefects      Defect[]            @relation("DefectReporter")
+  defectHistory        DefectHistory[]
+  defectComments       DefectComment[]
+  uploadedEvidence     Evidence[]
+  documents            Document[]
+  documentSignatures   DocumentSignature[]
+  dailyReports         DailyReport[]
+  authoredImprovements Improvement[]       @relation("ImprovementAuthor")
+  ownedImprovements    Improvement[]       @relation("ImprovementOwner")
+  improvementVotes     ImprovementVote[]
+  auditLogs            AuditLog[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  description  String?  @db.Text
+  isSystem     Boolean  @default(false)
+  // Roles personalizados heredan de un rol de sistema
+  baseRoleId   String?
+  baseRole     Role?    @relation("RoleBase", fields: [baseRoleId], references: [id], onDelete: Restrict)
+  derivedRoles Role[]   @relation("RoleBase")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  permissions RolePermission[]
+  memberships Membership[]
+
+  @@index([baseRoleId])
+  @@map("roles")
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  group     String
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles     RolePermission[]
+  overrides MembershipPermissionOverride[]
+
+  @@index([group])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissionOverrides MembershipPermissionOverride[]
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+  @@index([roleId])
+  @@map("memberships")
+}
+
+model MembershipPermissionOverride {
+  id           String           @id @default(cuid())
+  membershipId String
+  membership   Membership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  effect       PermissionEffect
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([membershipId, permissionId])
+  @@index([permissionId])
+  @@map("membership_permission_overrides")
+}
+
+// ─────────────────────────── Proyectos ───────────────────────────
+
+model Project {
+  id                 String     @id @default(cuid())
+  key                String     @unique
+  name               String
+  client             String?
+  qaPhase            QaPhase    @default(planeacion)
+  qaLeadId           String?
+  qaLead             User?      @relation("ProjectQaLead", fields: [qaLeadId], references: [id], onDelete: SetNull)
+  startDate          DateTime?  @db.Date
+  estimatedDate      DateTime?  @db.Date
+  originalCommitDate DateTime?  @db.Date
+  // Riesgo fijado a mano; si es null se calcula (src/features/portfolio/lib/risk.ts)
+  manualRisk         RiskLevel?
+  uatOpen            Boolean    @default(false)
+  // Avance y observaciones reportados en el control de liberaciones (0–100)
+  progressPercent    Float?
+  observations       String?    @db.Text
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  settings      ProjectSettings?
+  modules       ProjectModule[]
+  platforms     ProjectPlatform[]
+  memberships   Membership[]
+  slaPolicies   SlaPolicy[]
+  customMetrics CustomMetric[]
+  requirements  Requirement[]
+  testPlans     TestPlan[]
+  testSuites    TestSuite[]
+  testCases     TestCase[]
+  testCycles    TestCycle[]
+  testRuns      TestRun[]
+  defects       Defect[]
+  releases      Release[]
+  deployments   Deployment[]
+  scopeChanges  ScopeChange[]
+  documents     Document[]
+  dailyReports  DailyReport[]
+  improvements  Improvement[]
+  keyCounters   KeyCounter[]
+
+  @@index([qaLeadId])
+  @@index([qaPhase])
+  @@index([estimatedDate])
+  @@map("projects")
+}
+
+model ProjectModule {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  testSuites TestSuite[]
+  testCases  TestCase[]
+  defects    Defect[]
+
+  @@unique([projectId, name])
+  @@map("project_modules")
+}
+
+model ProjectPlatform {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  platform  Platform
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, platform])
+  @@map("project_platforms")
+}
+
+model ProjectSettings {
+  id                     String   @id @default(cuid())
+  projectId              String   @unique
+  project                Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  passRateMin            Int      @default(85)
+  reopenRateMax          Int      @default(10)
+  leakageMax             Int      @default(20)
+  requirementsOkMin      Int      @default(95)
+  maxOpenCritical        Int      @default(0)
+  maxOpenHighRelease     Int      @default(0)
+  businessDays           Boolean  @default(false)
+  deviationToleranceDays Int      @default(3)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("project_settings")
+}
+
+model SlaPolicy {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  severity        Severity
+  responseHours   Int
+  resolutionHours Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([projectId, severity])
+  @@map("sla_policies")
+}
+
+model CustomMetric {
+  id              String          @id @default(cuid())
+  projectId       String
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name            String
+  formula         String          @db.Text
+  unit            String?
+  betterWhen      MetricDirection
+  greenThreshold  Float
+  yellowThreshold Float
+  visible         Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([projectId, name])
+  @@map("custom_metrics")
+}
+
+// ───────────────────────── Test Manager ─────────────────────────
+
+model Requirement {
+  id          String            @id @default(cuid())
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key         String // REQ-###
+  title       String
+  description String?           @db.Text
+  status      RequirementStatus @default(borrador)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  testCases RequirementTestCase[]
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@map("requirements")
+}
+
+model RequirementTestCase {
+  id            String      @id @default(cuid())
+  requirementId String
+  requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  testCaseId    String
+  testCase      TestCase    @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([requirementId, testCaseId])
+  @@index([testCaseId])
+  @@map("requirement_test_cases")
+}
+
+model TestPlan {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key         String // TP-##
+  name        String
+  level       TestLevel
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  suites TestSuite[]
+  cycles TestCycle[]
+
+  @@unique([projectId, key])
+  @@map("test_plans")
+}
+
+model TestSuite {
+  id        String         @id @default(cuid())
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      TestPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  moduleId  String?
+  module    ProjectModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  key       String // TS-##
+  name      String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  testCases TestCase[]
+
+  @@unique([projectId, key])
+  @@index([planId])
+  @@index([moduleId])
+  @@map("test_suites")
+}
+
+model TestCase {
+  id            String         @id @default(cuid())
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  suiteId       String
+  suite         TestSuite      @relation(fields: [suiteId], references: [id], onDelete: Cascade)
+  moduleId      String?
+  module        ProjectModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  key           String // TC-###
+  title         String
+  preconditions String?        @db.Text
+  // [{ action, expectedResult }] validado con Zod (src/server/schemas/test-case.ts)
+  steps         Json
+  testType      TestType       @default(funcional)
+  platform      Platform?
+  priority      Priority       @default(media)
+  automated     Boolean        @default(false)
+  scriptPath    String?
+  reviewStatus  ReviewStatus   @default(pendiente_revision)
+  authorId      String?
+  author        User?          @relation("TestCaseAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  requirements RequirementTestCase[]
+  tags         TestCaseTag[]
+  runCases     TestRunCase[]
+
+  @@unique([projectId, key])
+  @@index([suiteId])
+  @@index([moduleId])
+  @@index([projectId, reviewStatus])
+  @@index([authorId])
+  @@map("test_cases")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  testCases TestCaseTag[]
+
+  @@map("tags")
+}
+
+model TestCaseTag {
+  id         String   @id @default(cuid())
+  testCaseId String
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([testCaseId, tagId])
+  @@index([tagId])
+  @@map("test_case_tags")
+}
+
+model TestCycle {
+  id             String      @id @default(cuid())
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  planId         String
+  plan           TestPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  key            String // CY-##
+  name           String
+  startDate      DateTime?   @db.Date
+  endDate        DateTime?   @db.Date
+  passRateTarget Int?
+  status         CycleStatus @default(planeado)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  runs TestRun[]
+
+  @@unique([projectId, key])
+  @@index([planId])
+  @@index([projectId, status])
+  @@map("test_cycles")
+}
+
+model TestRun {
+  id               String        @id @default(cuid())
+  projectId        String
+  project          Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // Obligatorio salvo type = exploratoria (se valida con Zod, no en la base)
+  cycleId          String?
+  cycle            TestCycle?    @relation(fields: [cycleId], references: [id], onDelete: SetNull)
+  key              String // EJ-###
+  name             String
+  type             RunType
+  environment      Environment
+  // SemVer obligatorio en smoke (Zod)
+  buildVersion     String?
+  status           RunStatus     @default(borrador)
+  // Resultado en el que se quedó la corrida, para reanudar
+  currentRunCaseId String?       @unique
+  currentRunCase   TestRunCase?  @relation("TestRunCurrentCase", fields: [currentRunCaseId], references: [id], onDelete: SetNull)
+  takenById        String?
+  takenBy          User?         @relation("TestRunTakenBy", fields: [takenById], references: [id], onDelete: SetNull)
+  takenAt          DateTime?
+  startedAt        DateTime?
+  pausedAt         DateTime?
+  finishedAt       DateTime?
+  dueAt            DateTime?
+  // Solo smoke: URL del ambiente y veredicto
+  environmentUrl   String?
+  smokeVerdict     SmokeVerdict?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  runCases TestRunCase[]
+
+  @@unique([projectId, key])
+  @@index([cycleId])
+  @@index([projectId, status])
+  @@index([takenById])
+  @@index([dueAt])
+  @@map("test_runs")
+}
+
+model TestRunCase {
+  id              String     @id @default(cuid())
+  runId           String
+  run             TestRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  testCaseId      String
+  testCase        TestCase   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  order           Int
+  result          TestResult @default(sin_ejecutar)
+  executedById    String?
+  executedBy      User?      @relation("TestRunCaseExecutor", fields: [executedById], references: [id], onDelete: SetNull)
+  executedAt      DateTime?
+  durationSeconds Int?
+  notes           String?    @db.Text
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  currentOfRun TestRun?        @relation("TestRunCurrentCase")
+  defects      DefectRunCase[]
+  evidence     Evidence[]
+
+  @@unique([runId, testCaseId])
+  @@index([testCaseId])
+  @@index([runId, result])
+  @@index([executedById])
+  @@map("test_run_cases")
+}
+
+// ─────────────────────────── Defectos ───────────────────────────
+
+model Defect {
+  id                String         @id @default(cuid())
+  projectId         String
+  project           Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key               String // BUG-###
+  title             String
+  description       String?        @db.Text
+  stepsToReproduce  String?        @db.Text
+  expectedResult    String?        @db.Text
+  actualResult      String?        @db.Text
+  severity          Severity
+  priority          Priority       @default(media)
+  status            DefectStatus   @default(nuevo)
+  origin            DefectOrigin   @default(equipo_qa)
+  platform          Platform?
+  moduleId          String?
+  module            ProjectModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  environment       Environment?
+  rootCause         RootCause      @default(por_definir)
+  injectedPhase     SdlcPhase?
+  detectedPhase     SdlcPhase?
+  foundInProduction Boolean        @default(false)
+  jiraKey           String?
+  assigneeId        String?
+  assignee          User?          @relation("DefectAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  reporterId        String?
+  reporter          User?          @relation("DefectReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  releaseId         String?
+  release           Release?       @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  firstResponseAt   DateTime?
+  resolvedAt        DateTime?
+  closedAt          DateTime?
+  reopenCount       Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  runCases DefectRunCase[]
+  history  DefectHistory[]
+  comments DefectComment[]
+  evidence Evidence[]
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@index([projectId, severity, status])
+  @@index([assigneeId, status])
+  @@index([reporterId])
+  @@index([releaseId])
+  @@index([moduleId])
+  @@index([createdAt])
+  @@map("defects")
+}
+
+model DefectRunCase {
+  id        String      @id @default(cuid())
+  defectId  String
+  defect    Defect      @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  runCaseId String
+  runCase   TestRunCase @relation(fields: [runCaseId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([defectId, runCaseId])
+  @@index([runCaseId])
+  @@map("defect_run_cases")
+}
+
+model DefectHistory {
+  id          String        @id @default(cuid())
+  defectId    String
+  defect      Defect        @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  fromStatus  DefectStatus?
+  toStatus    DefectStatus
+  changedById String?
+  changedBy   User?         @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  comment     String?       @db.Text
+  changedAt   DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([defectId, changedAt])
+  @@index([changedById])
+  @@map("defect_history")
+}
+
+model DefectComment {
+  id        String   @id @default(cuid())
+  defectId  String
+  defect    Defect   @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([defectId, createdAt])
+  @@index([authorId])
+  @@map("defect_comments")
+}
+
+// Archivo en almacenamiento externo (nunca en MySQL). Ligado a un resultado o a un defecto.
+model Evidence {
+  id           String       @id @default(cuid())
+  storageKey   String       @unique
+  contentType  String
+  sizeBytes    Int
+  runCaseId    String?
+  runCase      TestRunCase? @relation(fields: [runCaseId], references: [id], onDelete: Cascade)
+  defectId     String?
+  defect       Defect?      @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  uploadedById String?
+  uploadedBy   User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([runCaseId])
+  @@index([defectId])
+  @@index([uploadedById])
+  @@map("evidence")
+}
+
+// ─────────────────── Releases y portafolio ───────────────────
+
+model Release {
+  id           String        @id @default(cuid())
+  projectId    String
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  version      String
+  type         ReleaseType
+  status       ReleaseStatus @default(planeada)
+  devStartDate DateTime?     @db.Date
+  plannedDate  DateTime?     @db.Date
+  actualDate   DateTime?     @db.Date
+  goNoGo       GoDecision?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  defects     Defect[]
+  deployments Deployment[]
+
+  @@unique([projectId, version])
+  @@index([projectId, status])
+  @@index([plannedDate])
+  @@map("releases")
+}
+
+// Despliegues por ambiente (métricas DORA)
+model Deployment {
+  id           String           @id @default(cuid())
+  projectId    String
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  releaseId    String?
+  release      Release?         @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  version      String
+  environment  Environment
+  deployedAt   DateTime
+  // Área o equipo que lo pidió (texto libre: "DevOps", "Product Owner"…)
+  requestedBy  String
+  status       DeploymentStatus
+  prodApproval ProdApproval     @default(pendiente)
+  notes        String?          @db.Text
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([projectId, version, environment])
+  @@index([projectId, deployedAt])
+  @@index([environment, status])
+  @@index([releaseId])
+  @@map("deployments")
+}
+
+model ScopeChange {
+  id          String            @id @default(cuid())
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key         String
+  description String            @db.Text
+  type        ScopeChangeType
+  status      ScopeChangeStatus @default(en_analisis)
+  requestedAt DateTime          @db.Date
+  // Área que lo pidió (texto libre: "Negocio", "Finanzas"…)
+  requestedBy String
+  impact      RiskLevel
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@index([requestedAt])
+  @@map("scope_changes")
+}
+
+// ───────────────────── Documentos y reportes ─────────────────────
+
+model Document {
+  id        String         @id @default(cuid())
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      DocumentType
+  title     String
+  // Markdown
+  content   String         @db.LongText
+  status    DocumentStatus @default(borrador)
+  version   Int            @default(1)
+  authorId  String?
+  author    User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  signatures DocumentSignature[]
+
+  @@index([projectId, type])
+  @@index([authorId])
+  @@map("documents")
+}
+
+model DocumentSignature {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Versión del documento que se firmó
+  version    Int
+  signedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([documentId, userId, version])
+  @@index([userId])
+  @@map("document_signatures")
+}
+
+model DailyReport {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  summary   String   @db.Text
+  metrics   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, projectId, date])
+  @@index([projectId, date])
+  @@map("daily_reports")
+}
+
+model Improvement {
+  id          String            @id @default(cuid())
+  // null = mejora general, no de un proyecto
+  projectId   String?
+  project     Project?          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?           @db.Text
+  status      ImprovementStatus @default(propuesta)
+  area        String?
+  authorId    String?
+  author      User?             @relation("ImprovementAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  ownerId     String?
+  owner       User?             @relation("ImprovementOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  votes ImprovementVote[]
+
+  @@index([status])
+  @@index([projectId])
+  @@index([ownerId])
+  @@map("improvements")
+}
+
+model ImprovementVote {
+  id            String      @id @default(cuid())
+  improvementId String
+  improvement   Improvement @relation(fields: [improvementId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([improvementId, userId])
+  @@index([userId])
+  @@map("improvement_votes")
+}
+
+// ─────────────────────────── Sistema ───────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String
+  detail    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Último valor usado por prefijo (TC, BUG, EJ…) en cada proyecto.
+// Incrementar dentro de una transacción (src/server/keys.ts).
+model KeyCounter {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  prefix    String
+  lastValue Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, prefix])
+  @@map("key_counters")
+}

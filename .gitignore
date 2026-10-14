@@ -45,3 +45,6 @@ next-env.d.ts
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# prisma (cliente generado: npm run postinstall / prisma generate)
+/src/server/generated/

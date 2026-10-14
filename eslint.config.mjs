@@ -14,7 +14,28 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Static reference site; kept untouched for parity
     "legacy/**",
+    // Generated Prisma client
+    "src/server/generated/**",
   ]),
+  // Only src/server/ (and the prisma/ scripts) may touch Prisma or the database client
+  {
+    files: ["**/*.{ts,tsx,js,jsx,mjs}"],
+    ignores: ["src/server/**", "prisma/**", "prisma.config.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@prisma/*", "**/server/generated/**", "@/server/db"],
+              message:
+                "El acceso a datos vive solo en src/server/. Expón una función en src/server/ y úsala desde aquí.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

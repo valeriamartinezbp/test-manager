@@ -14,7 +14,7 @@ const EXTENSIONS = new Set([
   ".css",
   ".mdx",
 ]);
-const IGNORED_DIRS = new Set(["node_modules", ".next"]);
+const IGNORED_DIRS = new Set(["node_modules", ".next", "generated"]);
 
 // Utilidades de color de anillo/contorno con opacidad: ring-ring/50, outline-primary/[0.4]…
 const TRANSLUCENT_RING =

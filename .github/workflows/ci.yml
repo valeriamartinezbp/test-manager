@@ -17,9 +17,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # postinstall ejecuta `prisma generate`; ningún paso necesita MySQL
       - run: npm ci
+      - run: npm run db:validate
       - run: npm run lint
       - run: npm run check:focus
       - run: npm run typecheck
+      - run: npm test
       - run: npm run format:check
       - run: npm run build
