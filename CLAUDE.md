@@ -39,11 +39,24 @@ la identidad visual es morado y naranja.
     a otro elemento (p. ej. un `<Link>`).
   - La utilidad `cn` viene del paquete oficial **`cn`** (de shadcn, reemplaza clsx + tailwind-merge);
     `src/lib/utils.ts` solo la reexporta.
+  - **Componentes modificados a mano** (por accesibilidad del foco; si los regeneras con `shadcn add`,
+    vuelve a aplicar estos cambios):
+    - `button.tsx`: halo `focus-visible:ring-ring` (antes `/50`); variante `destructive` con
+      `focus-visible:ring-destructive` y `focus-visible:border-destructive` sólidos (antes `/20`, `/40`);
+      `aria-invalid:focus-visible:ring-destructive` y `dark:aria-invalid:focus-visible:ring-destructive`.
+    - `badge.tsx`: lo mismo que `button.tsx` (halo base, variante `destructive` y foco con `aria-invalid`).
+    - `checkbox.tsx`: halo `focus-visible:ring-ring` y foco con `aria-invalid` sólido.
+    - `tabs.tsx`: halo de `TabsTrigger` `focus-visible:ring-ring`.
+    - Se conservan el grosor de shadcn (`ring-3` / `ring-[3px]`) y el anillo de error sin foco
+      (`aria-invalid:ring-destructive/20`, `/40` en oscuro): es un indicador de estado, no de foco.
+  - **Anillos de foco siempre sólidos**: nunca `ring-ring/50` ni opacidad en `focus*:ring-*` /
+    `focus*:outline-*`; un halo translúcido no llega a 3:1. **Después de agregar o regenerar componentes
+    con shadcn, corre `npm run check:focus`** (también corre en CI) y revisa el grupo "Halo" de `/estilos`.
 - **Tema**: `next-themes` con la clase `.dark` en `<html>`, sigue al sistema por defecto y guarda la elección
   en localStorage (`qa-theme`). El HTML de un componente nunca debe depender del tema en el servidor:
   usa variantes `dark:` de CSS o lee el tema tras montar.
-- **Definición de terminado**: cada paso termina con `npm run lint`, `npm run typecheck`, `npm run format:check`
-  y `npm run build` en verde.
+- **Definición de terminado**: cada paso termina con `npm run lint`, `npm run check:focus`, `npm run typecheck`,
+  `npm run format:check` y `npm run build` en verde.
 
 ## Tokens de diseño
 
@@ -80,7 +93,9 @@ Cifras: usa `tabular-nums` en KPIs y columnas numéricas (las `<table>` ya lo ap
 Contraste: todos los pares `-foreground`/fondo cumplen ≥ 4.5:1 y `--ring` cumple ≥ 3:1 contra `--background`
 y `--card`, en ambos temas. Los textos sobre colores de marca son oscuros donde el blanco no alcanza
 (`secondary-foreground` en ambos temas; `primary-foreground` y `sidebar-primary-foreground` en oscuro).
-Si cambias un color, revisa que la tabla de `/estilos` siga en verde.
+`--destructive` usa texto blanco en ambos temas con el fondo a L 0.58 (mismo tono y croma que tweakcn).
+El halo de foco real de Button, Badge, Checkbox y TabsTrigger (normal, `destructive` y `aria-invalid`)
+también se mide en `/estilos` (grupo "Halo", ≥ 3:1). Si cambias un color, revisa que la tabla siga en verde.
 
 ### Semánticos de QA
 
@@ -156,6 +171,7 @@ Las rutas en `src/app/` son delgadas: componen piezas de `features/` y `componen
 - `npm run lint` · `npm run typecheck` (`next typegen && tsc --noEmit`: `next typegen` genera los tipos
   globales de rutas como `LayoutProps`, necesarios en un checkout limpio antes del build)
 - `npm run format` · `npm run format:check`
+- `npm run check:focus` (`scripts/check-focus.mjs`): falla si hay anillos de foco con opacidad en `src/`
 
 ## Dependencias
 

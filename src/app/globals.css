@@ -15,7 +15,8 @@
  *  - las sombras se llaman --theme-shadow-* para que @theme inline no se apunte a sí mismo.
  *  - las fuentes se cargan con next/font en layout.tsx y se conectan en @theme inline.
  *  - contraste ≥ 4.5:1: los valores marcados "ajustado" cambian el texto (-foreground) y, solo en
- *    --destructive oscuro, la luminosidad del fondo. Los fondos de marca no cambian.
+ *    --destructive, la luminosidad del fondo (mismo tono y croma, texto blanco en ambos temas).
+ *    Los fondos de marca no cambian.
  * `.light` permite forzar el tema claro en un subárbol (lo usa /estilos para medir contraste).
  */
 :root,
@@ -34,8 +35,8 @@
   --muted-foreground: oklch(0.4987 0.0128 285.925);
   --accent: oklch(0.9561 0.0233 308.1902);
   --accent-foreground: oklch(0.4459 0.2417 295.2729);
-  --destructive: oklch(0.6362 0.2102 25.4874);
-  --destructive-foreground: oklch(0.2 0.05 25.4874); /* ajustado: contraste */
+  --destructive: oklch(0.58 0.2102 25.4874); /* ajustado: L 0.6362 → 0.58 */
+  --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.9197 0.0041 286.3186);
   --input: oklch(0.9197 0.0041 286.3186);
   --ring: oklch(0.5818 0.2638 300.8406);
@@ -353,7 +354,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   :root {
     padding-top: env(safe-area-inset-top, 0px);

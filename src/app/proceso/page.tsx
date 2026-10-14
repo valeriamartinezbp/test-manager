@@ -14,7 +14,7 @@ export default function ProcesoPage() {
       <p className="text-lg text-muted-foreground">Sección en migración</p>
       <Link
         href="/"
-        className="w-fit rounded-sm text-sm underline underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="w-fit rounded-sm text-sm underline underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring"
       >
         Volver al inicio
       </Link>
