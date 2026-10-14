@@ -6,98 +6,243 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Tokens de diseño. Valores copiados de legacy/assets/css/styles.css.
- * Los tokens semánticos de shadcn se mapean a la paleta legacy; los que no tienen
- * equivalente directo se derivan de ella (ver CLAUDE.md).
+ * Este archivo es la fuente de verdad de la paleta. El tema de tweakcn
+ * (https://tweakcn.com/r/themes/cmv8lzieu000004leg5nv81fm) fue solo el punto de partida:
+ * no lo reinstales, sobrescribiría estas correcciones.
+ * Cambios respecto a la exportación de tweakcn:
+ *  - sombras: tweakcn exporta `hsl(270, 95%, 20% / 0.08)`, sintaxis inválida que el navegador
+ *    descarta; aquí van con la sintaxis moderna equivalente `hsl(270 95% 20% / 0.08)`.
+ *  - las sombras se llaman --theme-shadow-* para que @theme inline no se apunte a sí mismo.
+ *  - las fuentes se cargan con next/font en layout.tsx y se conectan en @theme inline.
+ *  - contraste ≥ 4.5:1: los valores marcados "ajustado" cambian el texto (-foreground) y, solo en
+ *    --destructive oscuro, la luminosidad del fondo. Los fondos de marca no cambian.
+ * `.light` permite forzar el tema claro en un subárbol (lo usa /estilos para medir contraste).
  */
-:root {
-  /* shadcn ← legacy */
-  --background: #f2f5fa; /* --paper */
-  --foreground: #13213a; /* --ink */
-  --card: #fbfcfe; /* --surface */
-  --card-foreground: var(--foreground);
-  --popover: var(--card);
-  --popover-foreground: var(--foreground);
-  --primary: #1f5fd6; /* --blue */
-  --primary-foreground: #ffffff; /* --blue-ink */
-  --secondary: var(--blue-soft);
-  --secondary-foreground: var(--blue-deep);
-  --accent: var(--blue-soft);
-  --accent-foreground: var(--blue-deep);
-  --muted: color-mix(
-    in srgb,
-    var(--border) 45%,
-    var(--background)
-  ); /* derivado */
-  --muted-foreground: #56637a; /* --muted */
-  --destructive: var(--bad);
-  --border: #d3dbe7; /* --line */
-  --input: var(--border);
-  --ring: var(--primary);
+:root,
+.light {
+  --background: oklch(0.9823 0.0027 286.3501);
+  --foreground: oklch(0.1417 0.0044 285.8192);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.1417 0.0044 285.8192);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.1417 0.0044 285.8192);
+  --primary: oklch(0.5818 0.2638 300.8406);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.7159 0.1804 49.4714);
+  --secondary-foreground: oklch(0.2 0.09 300.8406); /* ajustado: contraste */
+  --muted: oklch(0.9203 0.0034 286.3323);
+  --muted-foreground: oklch(0.4987 0.0128 285.925);
+  --accent: oklch(0.9561 0.0233 308.1902);
+  --accent-foreground: oklch(0.4459 0.2417 295.2729);
+  --destructive: oklch(0.6362 0.2102 25.4874);
+  --destructive-foreground: oklch(0.2 0.05 25.4874); /* ajustado: contraste */
+  --border: oklch(0.9197 0.0041 286.3186);
+  --input: oklch(0.9197 0.0041 286.3186);
+  --ring: oklch(0.5818 0.2638 300.8406);
+  --chart-1: oklch(0.5818 0.2638 300.8406);
+  --chart-2: oklch(0.7159 0.1804 49.4714);
+  --chart-3: oklch(0.6715 0.2426 316.5491);
+  --chart-4: oklch(0.7806 0.139 217.9909);
+  --chart-5: oklch(0.7619 0.1504 61.6109);
+  --sidebar: oklch(0.9658 0.0041 286.3235);
+  --sidebar-foreground: oklch(0.305 0.0182 285.2681);
+  --sidebar-primary: oklch(0.5818 0.2638 300.8406);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.9203 0.0034 286.3323);
+  --sidebar-accent-foreground: oklch(
+    0.48 0.235 300.8406
+  ); /* ajustado: contraste */
+  --sidebar-border: oklch(0.9034 0.005 286.3001);
+  --sidebar-ring: oklch(0.5818 0.2638 300.8406);
 
-  /* Derivados: gráficas y sidebar */
-  --chart-1: var(--primary);
-  --chart-2: var(--signal);
-  --chart-3: var(--ok);
-  --chart-4: var(--bad);
-  --chart-5: var(--muted-foreground);
-  --sidebar: var(--card);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--accent-foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
+  --radius: 0.375rem;
+  --letter-spacing: -0.015em;
 
-  /* Tokens propios del legacy */
-  --blue-soft: #e2ebfb;
-  --blue-deep: #16397a;
-  --signal: #d9680f;
-  --signal-text: #9a4a08;
-  --signal-soft: #fcebd9;
-  --ok: #1b7f5a;
-  --ok-soft: #dcf2e8;
-  --bad: #b42318;
-  --bad-soft: #fde4e1;
-  --navy: #13213a;
-  --on-navy: #eef2f8;
-  --grid: rgba(31, 95, 214, 0.06);
+  --theme-shadow-2xs: 0px 4px 12px -2px hsl(270 95% 20% / 0.04);
+  --theme-shadow-xs: 0px 4px 12px -2px hsl(270 95% 20% / 0.04);
+  --theme-shadow-sm:
+    0px 4px 12px -2px hsl(270 95% 20% / 0.08),
+    0px 1px 2px -3px hsl(270 95% 20% / 0.08);
+  --theme-shadow:
+    0px 4px 12px -2px hsl(270 95% 20% / 0.08),
+    0px 1px 2px -3px hsl(270 95% 20% / 0.08);
+  --theme-shadow-md:
+    0px 4px 12px -2px hsl(270 95% 20% / 0.08),
+    0px 2px 4px -3px hsl(270 95% 20% / 0.08);
+  --theme-shadow-lg:
+    0px 4px 12px -2px hsl(270 95% 20% / 0.08),
+    0px 4px 6px -3px hsl(270 95% 20% / 0.08);
+  --theme-shadow-xl:
+    0px 4px 12px -2px hsl(270 95% 20% / 0.08),
+    0px 8px 10px -3px hsl(270 95% 20% / 0.08);
+  --theme-shadow-2xl: 0px 4px 12px -2px hsl(270 95% 20% / 0.2);
 
-  /* Radios legacy */
-  --r-lg: 20px;
-  --r-md: 12px;
-  --r-sm: 8px;
-  --radius: var(--r-md);
+  /*
+   * Paleta de estados QA (no usar directamente: usa los tokens semánticos de abajo).
+   * Ninguna usa el morado de marca; el ámbar (85°) y el rojo (18°) quedan lejos del
+   * naranja de marca (49°). Por familia: color sólido, texto sobre él y fondo suave.
+   * Contraste ≥ 4.5:1 en sólido/texto, sólido/suave y sólido/fondo (ver /estilos).
+   */
+  --qa-green: oklch(0.5 0.13 150);
+  --qa-green-foreground: oklch(0.985 0.003 150);
+  --qa-green-subtle: oklch(0.955 0.04 150);
+  --qa-red: oklch(0.52 0.19 18);
+  --qa-red-foreground: oklch(0.985 0.003 18);
+  --qa-red-subtle: oklch(0.955 0.022 18);
+  --qa-amber: oklch(0.53 0.105 85);
+  --qa-amber-foreground: oklch(0.985 0.003 85);
+  --qa-amber-subtle: oklch(0.965 0.035 85);
+  --qa-blue: oklch(0.5 0.14 250);
+  --qa-blue-foreground: oklch(0.985 0.003 250);
+  --qa-blue-subtle: oklch(0.955 0.022 250);
+  --qa-cyan: oklch(0.5 0.085 215);
+  --qa-cyan-foreground: oklch(0.985 0.003 215);
+  --qa-cyan-subtle: oklch(0.955 0.025 215);
+  --qa-slate: oklch(0.5 0.02 286);
+  --qa-slate-foreground: oklch(0.985 0.003 286);
+  --qa-slate-subtle: oklch(0.94 0.006 286);
 }
 
 .dark {
-  --background: #0c1424;
-  --foreground: #e7edf6;
-  --card: #131f35;
-  --primary: #6d9cf2;
-  --primary-foreground: #0c1424;
-  --muted-foreground: #9fb0c8;
-  --border: #26365a;
+  --background: oklch(0.1352 0.0116 284.7429);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.1656 0.0186 284.1807);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.1656 0.0186 284.1807);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(0.6709 0.2222 305.8239);
+  --primary-foreground: oklch(0.2 0.09 305.8239); /* ajustado: contraste */
+  --secondary: oklch(0.7461 0.1715 51.5619);
+  --secondary-foreground: oklch(0.2 0.09 300.8406); /* ajustado: contraste */
+  --muted: oklch(0.2509 0.0216 284.7384);
+  --muted-foreground: oklch(0.7456 0.0218 285.8595);
+  --accent: oklch(0.2421 0.0596 307.1221);
+  --accent-foreground: oklch(0.7724 0.1512 307.7532);
+  --destructive: oklch(0.58 0.238 28.6175); /* ajustado: L 0.5968 → 0.58 */
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.279 0.0252 284.6469);
+  --input: oklch(0.279 0.0252 284.6469);
+  --ring: oklch(0.6709 0.2222 305.8239);
+  --chart-1: oklch(0.6709 0.2222 305.8239);
+  --chart-2: oklch(0.7461 0.1715 51.5619);
+  --chart-3: oklch(0.7494 0.1985 317.135);
+  --chart-4: oklch(0.8167 0.143 217.0616);
+  --chart-5: oklch(0.8243 0.1454 72.1218);
+  --sidebar: oklch(0.1559 0.0162 284.3621);
+  --sidebar-foreground: oklch(0.8798 0.0052 286.2924);
+  --sidebar-primary: oklch(0.6709 0.2222 305.8239);
+  --sidebar-primary-foreground: oklch(
+    0.2 0.09 305.8239
+  ); /* ajustado: contraste */
+  --sidebar-accent: oklch(0.2509 0.0216 284.7384);
+  --sidebar-accent-foreground: oklch(0.7198 0.1881 306.9169);
+  --sidebar-border: oklch(0.279 0.0252 284.6469);
+  --sidebar-ring: oklch(0.6709 0.2222 305.8239);
 
-  --blue-soft: #1b2d52;
-  --blue-deep: #bcd2fb;
-  --signal: #f0954a;
-  --signal-text: #f5ad6f;
-  --signal-soft: #3a2614;
-  --ok: #5fd0a0;
-  --ok-soft: #123a2c;
-  --bad: #ff8f84;
-  --bad-soft: #41191a;
-  --navy: #1a2a47;
-  --on-navy: #eef2f8;
-  --grid: rgba(109, 156, 242, 0.07);
+  --theme-shadow-2xs: 0px 10px 20px -4px hsl(0 0% 0% / 0.25);
+  --theme-shadow-xs: 0px 10px 20px -4px hsl(0 0% 0% / 0.25);
+  --theme-shadow-sm:
+    0px 10px 20px -4px hsl(0 0% 0% / 0.5), 0px 1px 2px -5px hsl(0 0% 0% / 0.5);
+  --theme-shadow:
+    0px 10px 20px -4px hsl(0 0% 0% / 0.5), 0px 1px 2px -5px hsl(0 0% 0% / 0.5);
+  --theme-shadow-md:
+    0px 10px 20px -4px hsl(0 0% 0% / 0.5), 0px 2px 4px -5px hsl(0 0% 0% / 0.5);
+  --theme-shadow-lg:
+    0px 10px 20px -4px hsl(0 0% 0% / 0.5), 0px 4px 6px -5px hsl(0 0% 0% / 0.5);
+  --theme-shadow-xl:
+    0px 10px 20px -4px hsl(0 0% 0% / 0.5), 0px 8px 10px -5px hsl(0 0% 0% / 0.5);
+  /* tweakcn exporta opacidad 1.25; se limita al máximo válido */
+  --theme-shadow-2xl: 0px 10px 20px -4px hsl(0 0% 0% / 1);
+
+  --qa-green: oklch(0.79 0.16 150);
+  --qa-green-foreground: oklch(0.2 0.03 150);
+  --qa-green-subtle: oklch(0.27 0.055 150);
+  --qa-red: oklch(0.69 0.175 18);
+  --qa-red-foreground: oklch(0.2 0.03 18);
+  --qa-red-subtle: oklch(0.245 0.065 18);
+  --qa-amber: oklch(0.85 0.16 85);
+  --qa-amber-foreground: oklch(0.2 0.03 85);
+  --qa-amber-subtle: oklch(0.28 0.055 85);
+  --qa-blue: oklch(0.76 0.12 250);
+  --qa-blue-foreground: oklch(0.2 0.03 250);
+  --qa-blue-subtle: oklch(0.27 0.06 250);
+  --qa-cyan: oklch(0.79 0.11 215);
+  --qa-cyan-foreground: oklch(0.2 0.03 215);
+  --qa-cyan-subtle: oklch(0.27 0.045 215);
+  --qa-slate: oklch(0.78 0.02 286);
+  --qa-slate-foreground: oklch(0.2 0.03 286);
+  --qa-slate-subtle: oklch(0.27 0.015 286);
+}
+
+/*
+ * Tokens semánticos del dominio QA. Se declaran en los tres selectores para que
+ * se resuelvan con la paleta del tema del propio elemento (también en subárboles .dark/.light).
+ */
+:root,
+.light,
+.dark {
+  /* Resultado de caso */
+  --result-not-run: var(--qa-slate);
+  --result-not-run-foreground: var(--qa-slate-foreground);
+  --result-not-run-subtle: var(--qa-slate-subtle);
+  --result-passed: var(--qa-green);
+  --result-passed-foreground: var(--qa-green-foreground);
+  --result-passed-subtle: var(--qa-green-subtle);
+  --result-failed: var(--qa-red);
+  --result-failed-foreground: var(--qa-red-foreground);
+  --result-failed-subtle: var(--qa-red-subtle);
+  --result-blocked: var(--qa-amber);
+  --result-blocked-foreground: var(--qa-amber-foreground);
+  --result-blocked-subtle: var(--qa-amber-subtle);
+  --result-skipped: var(--qa-cyan);
+  --result-skipped-foreground: var(--qa-cyan-foreground);
+  --result-skipped-subtle: var(--qa-cyan-subtle);
+
+  /* Severidad */
+  --severity-critical: var(--qa-red);
+  --severity-critical-foreground: var(--qa-red-foreground);
+  --severity-critical-subtle: var(--qa-red-subtle);
+  --severity-high: var(--qa-amber);
+  --severity-high-foreground: var(--qa-amber-foreground);
+  --severity-high-subtle: var(--qa-amber-subtle);
+  --severity-medium: var(--qa-blue);
+  --severity-medium-foreground: var(--qa-blue-foreground);
+  --severity-medium-subtle: var(--qa-blue-subtle);
+  --severity-low: var(--qa-slate);
+  --severity-low-foreground: var(--qa-slate-foreground);
+  --severity-low-subtle: var(--qa-slate-subtle);
+
+  /* Semáforo: SLA, métricas, riesgo, quality gates */
+  --status-good: var(--qa-green);
+  --status-good-foreground: var(--qa-green-foreground);
+  --status-good-subtle: var(--qa-green-subtle);
+  --status-warning: var(--qa-amber);
+  --status-warning-foreground: var(--qa-amber-foreground);
+  --status-warning-subtle: var(--qa-amber-subtle);
+  --status-critical: var(--qa-red);
+  --status-critical-foreground: var(--qa-red-foreground);
+  --status-critical-subtle: var(--qa-red-subtle);
+
+  /* Estado de corrida */
+  --run-draft: var(--qa-slate);
+  --run-draft-foreground: var(--qa-slate-foreground);
+  --run-draft-subtle: var(--qa-slate-subtle);
+  --run-active: var(--qa-blue);
+  --run-active-foreground: var(--qa-blue-foreground);
+  --run-active-subtle: var(--qa-blue-subtle);
+  --run-paused: var(--qa-amber);
+  --run-paused-foreground: var(--qa-amber-foreground);
+  --run-paused-subtle: var(--qa-amber-subtle);
+  --run-completed: var(--qa-green);
+  --run-completed-foreground: var(--qa-green-foreground);
+  --run-completed-subtle: var(--qa-green-subtle);
 }
 
 @theme inline {
-  --font-sans: var(--font-ibm-plex-sans);
-  --font-display: var(--font-bricolage-grotesque);
-  --font-heading: var(--font-display);
+  --font-sans: var(--font-red-hat-display), sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-heading: var(--font-red-hat-display), sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -109,11 +254,12 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -131,33 +277,78 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --color-blue-soft: var(--blue-soft);
-  --color-blue-deep: var(--blue-deep);
-  --color-signal: var(--signal);
-  --color-signal-text: var(--signal-text);
-  --color-signal-soft: var(--signal-soft);
-  --color-ok: var(--ok);
-  --color-ok-soft: var(--ok-soft);
-  --color-bad: var(--bad);
-  --color-bad-soft: var(--bad-soft);
-  --color-navy: var(--navy);
-  --color-on-navy: var(--on-navy);
-  --color-grid: var(--grid);
+  --color-result-not-run: var(--result-not-run);
+  --color-result-not-run-foreground: var(--result-not-run-foreground);
+  --color-result-not-run-subtle: var(--result-not-run-subtle);
+  --color-result-passed: var(--result-passed);
+  --color-result-passed-foreground: var(--result-passed-foreground);
+  --color-result-passed-subtle: var(--result-passed-subtle);
+  --color-result-failed: var(--result-failed);
+  --color-result-failed-foreground: var(--result-failed-foreground);
+  --color-result-failed-subtle: var(--result-failed-subtle);
+  --color-result-blocked: var(--result-blocked);
+  --color-result-blocked-foreground: var(--result-blocked-foreground);
+  --color-result-blocked-subtle: var(--result-blocked-subtle);
+  --color-result-skipped: var(--result-skipped);
+  --color-result-skipped-foreground: var(--result-skipped-foreground);
+  --color-result-skipped-subtle: var(--result-skipped-subtle);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-critical-foreground: var(--severity-critical-foreground);
+  --color-severity-critical-subtle: var(--severity-critical-subtle);
+  --color-severity-high: var(--severity-high);
+  --color-severity-high-foreground: var(--severity-high-foreground);
+  --color-severity-high-subtle: var(--severity-high-subtle);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-medium-foreground: var(--severity-medium-foreground);
+  --color-severity-medium-subtle: var(--severity-medium-subtle);
+  --color-severity-low: var(--severity-low);
+  --color-severity-low-foreground: var(--severity-low-foreground);
+  --color-severity-low-subtle: var(--severity-low-subtle);
+  --color-status-good: var(--status-good);
+  --color-status-good-foreground: var(--status-good-foreground);
+  --color-status-good-subtle: var(--status-good-subtle);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-foreground: var(--status-warning-foreground);
+  --color-status-warning-subtle: var(--status-warning-subtle);
+  --color-status-critical: var(--status-critical);
+  --color-status-critical-foreground: var(--status-critical-foreground);
+  --color-status-critical-subtle: var(--status-critical-subtle);
+  --color-run-draft: var(--run-draft);
+  --color-run-draft-foreground: var(--run-draft-foreground);
+  --color-run-draft-subtle: var(--run-draft-subtle);
+  --color-run-active: var(--run-active);
+  --color-run-active-foreground: var(--run-active-foreground);
+  --color-run-active-subtle: var(--run-active-subtle);
+  --color-run-paused: var(--run-paused);
+  --color-run-paused-foreground: var(--run-paused-foreground);
+  --color-run-paused-subtle: var(--run-paused-subtle);
+  --color-run-completed: var(--run-completed);
+  --color-run-completed-foreground: var(--run-completed-foreground);
+  --color-run-completed-subtle: var(--run-completed-subtle);
 
-  /* rounded-sm / rounded-md / rounded-lg = --r-sm / --r-md / --r-lg */
-  --radius-sm: var(--r-sm);
-  --radius-md: var(--r-md);
-  --radius-lg: var(--r-lg);
-  --radius-xl: var(--r-lg);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-}
 
-@utility code {
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-  font-weight: 500;
+  --shadow-2xs: var(--theme-shadow-2xs);
+  --shadow-xs: var(--theme-shadow-xs);
+  --shadow-sm: var(--theme-shadow-sm);
+  --shadow: var(--theme-shadow);
+  --shadow-md: var(--theme-shadow-md);
+  --shadow-lg: var(--theme-shadow-lg);
+  --shadow-xl: var(--theme-shadow-xl);
+  --shadow-2xl: var(--theme-shadow-2xl);
+
+  --tracking-tighter: calc(var(--letter-spacing) - 0.05em);
+  --tracking-tight: calc(var(--letter-spacing) - 0.025em);
+  --tracking-normal: var(--letter-spacing);
+  --tracking-wide: calc(var(--letter-spacing) + 0.025em);
+  --tracking-wider: calc(var(--letter-spacing) + 0.05em);
+  --tracking-widest: calc(var(--letter-spacing) + 0.1em);
 }
 
 @layer base {
@@ -169,31 +360,18 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   html {
-    scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 76px);
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-background font-sans text-foreground;
-    font-size: 16px;
-    line-height: 1.55;
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 32px 32px;
+    @apply bg-background font-sans tracking-normal text-foreground;
   }
-  h1,
-  h2,
-  h3 {
-    font-family: var(--font-display);
-    /* El legacy hereda el bold del navegador; el preflight de Tailwind lo quita */
-    font-weight: 700;
-    line-height: 1.08;
-    letter-spacing: -0.01em;
+  /* Cifras alineadas en tablas; para KPIs fuera de tablas usa la utilidad `tabular-nums` */
+  table {
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
-    outline: 3px solid var(--primary);
-    outline-offset: 3px;
-    border-radius: 6px;
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
     html {

@@ -1,30 +1,31 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type ThemeToggleProps = {
   className?: string;
 };
 
-// Igual que el legacy: alterna respecto al tema visible (incluido el del sistema)
-// y guarda la elección explícita. El render no depende del tema, así que no hay
-// desajuste de hidratación.
+// Alterna respecto al tema visible (incluido el del sistema) y guarda la elección.
+// El HTML no depende del tema: los íconos se muestran u ocultan con la variante
+// dark de CSS, así que no hay desajuste de hidratación.
 export function ThemeToggle({ className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      className={className}
       aria-label="Cambiar tema: alternar entre modo claro y oscuro"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className={cn(
-        "rounded-full border border-border bg-card px-3 py-1.5 text-sm/[1.55] whitespace-nowrap",
-        className,
-      )}
     >
+      <Sun aria-hidden="true" className="dark:hidden" />
+      <Moon aria-hidden="true" className="hidden dark:block" />
       Cambiar tema
-    </button>
+    </Button>
   );
 }

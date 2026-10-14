@@ -1,25 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, IBM_Plex_Sans } from "next/font/google";
+import { JetBrains_Mono, Red_Hat_Display } from "next/font/google";
 
 import { ThemeProvider } from "@/components/layout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
 
-// next/font no admite pesos fijos junto con ejes extra: se carga la fuente
-// variable completa (incluye 500, 700 y 800) con el eje opsz, como el legacy.
-const bricolageGrotesque = Bricolage_Grotesque({
-  variable: "--font-bricolage-grotesque",
+// Fuentes del tema de tweakcn. --font-serif (Georgia) es una fuente de sistema
+// y no se carga; se define directamente en globals.css.
+const redHatDisplay = Red_Hat_Display({
+  variable: "--font-red-hat-display",
   subsets: ["latin"],
-  axes: ["opsz"],
-  fallback: ["Trebuchet MS", "Arial", "sans-serif"],
 });
 
-const ibmPlexSans = IBM_Plex_Sans({
-  variable: "--font-ibm-plex-sans",
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  fallback: ["Arial", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -42,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${bricolageGrotesque.variable} ${ibmPlexSans.variable} h-full antialiased`}
+      className={`${redHatDisplay.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider

@@ -2,30 +2,35 @@
 
 # BluePixel · QA Center + Test Manager
 
-Plataforma multi-proyecto de gestión de calidad. Se está migrando **por pasos** desde el sitio estático
-de `legacy/` (mapa interactivo del proceso de QA, SOP-QA-001 a SOP-QA-009).
+Plataforma multi-proyecto de gestión de calidad. Se construye **por pasos**. `legacy/` (sitio estático original
+con el mapa del proceso de QA, SOP-QA-001 a SOP-QA-009) se conserva **solo como referencia de contenido**;
+la identidad visual es morado y naranja.
 
 ## Stack
 
 - Next.js (App Router), React, TypeScript estricto, Tailwind CSS v4, shadcn/ui (preset `base-nova`, sobre Base UI).
-- Más adelante: Prisma + MySQL (paso 3).
-- npm como gestor de paquetes. Node 24 (`.nvmrc`; usa `nvm use`).
+- Más adelante: Prisma + MySQL.
+- npm como gestor de paquetes. Node 24 (`.nvmrc`; usa `nvm use`). CI usa la misma versión.
 
 ## Reglas
 
 - **Idioma**: identificadores de código (variables, funciones, tipos, archivos de componentes) en inglés;
-  todo texto visible en la UI en español. El documento usa `lang="es"`.
+  todo texto visible en la UI en español. El documento usa `lang="es"`. Excepción: los valores del
+  vocabulario de QA (ver abajo) están en español porque serán los enums de Prisma.
 - **Tipado**: prohibido `any` y `@ts-ignore` (tampoco `@ts-expect-error` para silenciar errores).
   Todo dato externo (API, formularios, base de datos, query params, JSON) se valida con **Zod**.
 - **Componentes**: Server Components por defecto; `"use client"` solo en componentes con interactividad
   (estado, efectos, eventos del navegador), y lo más abajo posible en el árbol.
 - **Datos**: el acceso a datos vive solo en `src/server/`. Los componentes nunca consultan la base de datos directamente.
-- **Estilos**: colores solo mediante tokens del tema (`bg-background`, `text-muted-foreground`, `border-border`, etc.,
-  definidos en `src/app/globals.css`). Nada de valores hex sueltos ni colores arbitrarios en componentes.
-- **Accesibilidad obligatoria**: navegación completa con teclado, `aria-label` donde no haya texto visible,
-  estilos `focus-visible` en todo elemento interactivo y respeto a `prefers-reduced-motion`
-  (variantes `motion-safe:` / `motion-reduce:`).
-- **Paridad con legacy**: `legacy/` es la referencia. No inventar textos ni datos; copiarlos de
+- **Estilos**: colores **solo** mediante las clases de los tokens de la tabla de abajo. Nada de hex, `rgb()`,
+  `oklch()` sueltos ni colores de la paleta por defecto de Tailwind (`red-500`, `slate-100`…) en componentes.
+  Las opacidades sobre tokens (`bg-primary/80`) están permitidas.
+- **Estados de QA**: nunca se comunican solo con color. Usa `<StatusBadge domain value />`
+  (`src/components/qa/`), que siempre muestra ícono + texto + color. El morado de marca no se usa para estados.
+- **Accesibilidad obligatoria**: navegación completa con teclado, `aria-label` donde no haya texto visible
+  (si hay texto visible, el `aria-label` debe contenerlo), `focus-visible` en todo elemento interactivo,
+  contraste ≥ 4.5:1 en texto y respeto a `prefers-reduced-motion` (variantes `motion-safe:` / `motion-reduce:`).
+- **Contenido de legacy**: no inventar textos ni datos del proceso de QA; copiarlos de
   `legacy/assets/js/app.js` y `legacy/index.html`. No modificar nada dentro de `legacy/`.
 - **shadcn/ui**: los componentes de `src/components/ui/` se generan con `npx shadcn@latest add <componente>`;
   no editarlos a mano salvo que sea imprescindible. Están excluidos de Prettier.
@@ -34,67 +39,112 @@ de `legacy/` (mapa interactivo del proceso de QA, SOP-QA-001 a SOP-QA-009).
     a otro elemento (p. ej. un `<Link>`).
   - La utilidad `cn` viene del paquete oficial **`cn`** (de shadcn, reemplaza clsx + tailwind-merge);
     `src/lib/utils.ts` solo la reexporta.
-- **Tema**: `next-themes` con la clase `.dark` en `<html>` (clave de localStorage `qa-theme`, la misma del legacy).
-  El render de un componente nunca debe depender del tema en el servidor; si hace falta, léelo tras montar.
-- **Definición de terminado**: cada paso termina con `npm run lint`, `npm run typecheck` y `npm run build` en verde
-  (CI además ejecuta `npm run format:check`).
+- **Tema**: `next-themes` con la clase `.dark` en `<html>`, sigue al sistema por defecto y guarda la elección
+  en localStorage (`qa-theme`). El HTML de un componente nunca debe depender del tema en el servidor:
+  usa variantes `dark:` de CSS o lee el tema tras montar.
+- **Definición de terminado**: cada paso termina con `npm run lint`, `npm run typecheck`, `npm run format:check`
+  y `npm run build` en verde.
 
 ## Tokens de diseño
 
-Definidos en `src/app/globals.css` (`:root` para claro, `.dark` para oscuro) con los valores de
-`legacy/assets/css/styles.css`. **Usa siempre estas clases; nunca hex, `rgb()` ni colores de la paleta
-por defecto de Tailwind (`blue-500`, `slate-100`…) en componentes.** Las opacidades sobre tokens
-(`bg-primary/80`) están permitidas.
+**`src/app/globals.css` es la fuente de verdad de la paleta.** El tema de tweakcn
+(`https://tweakcn.com/r/themes/cmv8lzieu000004leg5nv81fm`) fue solo el punto de partida: **no lo reinstales**
+con `npx shadcn add`, porque reintroduce sombras con sintaxis inválida, variables que se apuntan a sí mismas
+y pares sin contraste. Los cambios de color se hacen a mano en `globals.css`.
 
-| Legacy          | Token actual                                                   | Clase Tailwind                              |
-| --------------- | -------------------------------------------------------------- | ------------------------------------------- |
-| `--paper`       | `--background`                                                 | `bg-background`                             |
-| `--ink`         | `--foreground`, `--card-foreground`, `--popover-foreground`    | `text-foreground`                           |
-| `--surface`     | `--card`, `--popover`                                          | `bg-card`, `bg-popover`                     |
-| `--muted`       | `--muted-foreground`                                           | `text-muted-foreground`                     |
-| _(derivado)_    | `--muted` = 45 % `--line` sobre `--paper`                      | `bg-muted`                                  |
-| `--line`        | `--border`, `--input`                                          | `border-border`, `border-input`             |
-| `--blue`        | `--primary`, `--ring`                                          | `bg-primary`, `text-primary`, `ring-ring`   |
-| `--blue-ink`    | `--primary-foreground`                                         | `text-primary-foreground`                   |
-| `--blue-soft`   | `--secondary`, `--accent`, `--blue-soft`                       | `bg-secondary`, `bg-accent`, `bg-blue-soft` |
-| `--blue-deep`   | `--secondary-foreground`, `--accent-foreground`, `--blue-deep` | `text-blue-deep`                            |
-| `--signal`      | `--signal`                                                     | `bg-signal`, `text-signal`                  |
-| `--signal-text` | `--signal-text`                                                | `text-signal-text`                          |
-| `--signal-soft` | `--signal-soft`                                                | `bg-signal-soft`                            |
-| `--ok`          | `--ok`                                                         | `bg-ok`, `text-ok`                          |
-| `--ok-soft`     | `--ok-soft`                                                    | `bg-ok-soft`                                |
-| `--bad`         | `--destructive`, `--bad`                                       | `bg-destructive`, `text-bad`                |
-| `--bad-soft`    | `--bad-soft`                                                   | `bg-bad-soft`                               |
-| `--navy`        | `--navy`                                                       | `bg-navy`                                   |
-| `--on-navy`     | `--on-navy`                                                    | `text-on-navy`                              |
-| `--grid`        | `--grid`                                                       | `bg-grid` (cuadrícula del `body`)           |
-| `--display`     | `--font-display`                                               | `font-display` (h1–h3 lo usan por defecto)  |
-| `--body`        | `--font-sans`                                                  | `font-sans` (por defecto en `body`)         |
-| `--r-sm` 8px    | `--radius-sm`                                                  | `rounded-sm`                                |
-| `--r-md` 12px   | `--radius-md`, `--radius`                                      | `rounded-md`                                |
-| `--r-lg` 20px   | `--radius-lg`, `--radius-xl`                                   | `rounded-lg` (paneles), `rounded-xl` (Card) |
-| `.code`         | utilidad `code`                                                | `code`                                      |
+Tokens en `:root`/`.light` (claro) y `.dark` (oscuro), expuestos a Tailwind con `@theme inline`.
+Revisión visual y tabla de contraste calculada en `/estilos` (solo en desarrollo).
 
-Derivados sin equivalente legacy: `--chart-1..5` (primary, signal, ok, bad, muted-foreground) y
-`--sidebar-*` (card, foreground, primary, accent, border, ring). Para revisar la paleta en vivo:
-`/estilos` (solo en desarrollo).
+### Marca y base
+
+| Token                                                                                           | Uso                                   | Clases                                      |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------- |
+| `--primary` / `--primary-foreground`                                                            | Morado de marca: acción principal     | `bg-primary`, `text-primary-foreground`     |
+| `--secondary` / `--secondary-foreground`                                                        | Naranja de marca                      | `bg-secondary`, `text-secondary-foreground` |
+| `--accent` / `--accent-foreground`                                                              | Morado suave (hover, selección)       | `bg-accent`, `text-accent-foreground`       |
+| `--ring`                                                                                        | Anillo de foco                        | `ring-ring`, `outline-ring`                 |
+| `--background` / `--foreground`                                                                 | Fondo y texto de página               | `bg-background`, `text-foreground`          |
+| `--card`, `--popover` (+ `-foreground`)                                                         | Superficies                           | `bg-card`, `bg-popover`                     |
+| `--muted` / `--muted-foreground`                                                                | Superficie neutra / texto secundario  | `bg-muted`, `text-muted-foreground`         |
+| `--border`, `--input`                                                                           | Bordes                                | `border-border`, `border-input`             |
+| `--destructive` / `--destructive-foreground`                                                    | Acciones destructivas (no estados QA) | `bg-destructive`, `text-destructive`        |
+| `--chart-1..5`                                                                                  | Series de gráficas                    | `fill-chart-1`, `bg-chart-1`…               |
+| `--sidebar-*`                                                                                   | Navegación lateral                    | `bg-sidebar`, `text-sidebar-foreground`…    |
+| `--font-sans` Red Hat Display · `--font-mono` JetBrains Mono · `--font-serif` Georgia (sistema) | Tipografía                            | `font-sans`, `font-mono`, `font-serif`      |
+| `--radius` 0.375rem (escala `sm`…`4xl` derivada)                                                | Radios                                | `rounded-sm`…`rounded-4xl`                  |
+| `--theme-shadow-*`                                                                              | Sombras del tema                      | `shadow-2xs`…`shadow-2xl`                   |
+| `--letter-spacing` −0.015em                                                                     | Tracking base                         | `tracking-normal` (y `tight`, `wide`…)      |
+
+Cifras: usa `tabular-nums` en KPIs y columnas numéricas (las `<table>` ya lo aplican por defecto).
+
+Contraste: todos los pares `-foreground`/fondo cumplen ≥ 4.5:1 y `--ring` cumple ≥ 3:1 contra `--background`
+y `--card`, en ambos temas. Los textos sobre colores de marca son oscuros donde el blanco no alcanza
+(`secondary-foreground` en ambos temas; `primary-foreground` y `sidebar-primary-foreground` en oscuro).
+Si cambias un color, revisa que la tabla de `/estilos` siga en verde.
+
+### Semánticos de QA
+
+Cada token tiene tres variantes: el color sólido (`X`), el texto sobre él (`X-foreground`) y un fondo suave
+(`X-subtle`). Para badges: `bg-X-subtle text-X`. Para rellenos: `bg-X text-X-foreground`.
+Todos los pares (`X-foreground`/`X`, `X`/`X-subtle`, `X`/`background`) cumplen ≥ 4.5:1 en ambos temas.
+
+| Grupo                                           | Tokens (clase `bg-…`, `text-…`)                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Resultado de caso                               | `result-not-run`, `result-passed`, `result-failed`, `result-blocked`, `result-skipped` |
+| Severidad                                       | `severity-critical`, `severity-high`, `severity-medium`, `severity-low`                |
+| Semáforo (SLA, métricas, riesgo, quality gates) | `status-good`, `status-warning`, `status-critical`                                     |
+| Estado de corrida                               | `run-draft`, `run-active`, `run-paused`, `run-completed`                               |
+
+Familias de color (primitivas `--qa-*`, no usar directamente): verde 150° (passed, good, completed),
+rojo 18° (failed, critical, severity-critical), ámbar 85° (blocked, warning, paused, severity-high),
+azul 250° (run-active, severity-medium), cian 215° (skipped), neutro 286° (not-run, draft, severity-low).
+El ámbar y el rojo están deliberadamente lejos del naranja de marca (49°).
+
+## Vocabulario de QA
+
+Fuente única: `src/lib/qa-status.ts` (tipos de unión, listas `as const` y mapa etiqueta + ícono lucide + token).
+Los valores son los futuros enums de Prisma; no los renombres sin migración.
+
+| Dominio (`domain`) | Valor → etiqueta                                                                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `testResult`       | `sin_ejecutar` Sin ejecutar · `aprobado` Aprobado · `fallido` Fallido · `bloqueado` Bloqueado · `omitido` Omitido                                                                               |
+| `severity`         | `critica` Crítica · `alta` Alta · `media` Media · `baja` Baja                                                                                                                                   |
+| `defectStatus`     | `nuevo` Nuevo · `asignado` Asignado · `en_curso` En curso · `re_test` Re-test · `cerrado` Cerrado · `reabierto` Reabierto · `diferido` Diferido · `rechazado` Rechazado · `duplicado` Duplicado |
+| `runStatus`        | `borrador` Borrador · `en_curso` En curso · `pausada` Pausada · `completada` Completada                                                                                                         |
+| `trafficLight`     | `en_meta` En meta · `atencion` Atención · `fuera_de_meta` Fuera de meta                                                                                                                         |
+
+## Reglas de negocio decididas
+
+- **SLA por severidad** (respuesta / resolución), configurables por proyecto:
+  Crítica 4 h / 24 h · Alta 8 h / 72 h · Media 24 h / 120 h · Baja 48 h / 240 h.
+- **Semáforo de SLA**: verde (`en_meta`) hasta el 50 % del tiempo; amarillo (`atencion`) hasta el 100 %
+  o mientras no haya respuesta; rojo (`fuera_de_meta`) al vencer.
+- **Sign-off** bloqueado si el pass rate es menor a 85 %.
+- **KPIs (SOP-QA-009)**: tasa de reapertura < 10 % y fuga a producción < 20 %.
+- **Criterio para liberar**: 0 defectos críticos abiertos, 0 altos del release y requerimientos en OK ≥ 95 %.
+- **Inicio de sesión** solo con cuentas `@bluepixel.mx`.
+- **Roles**: QA Manager, Dirección (solo lectura de dashboards), QA Lead, QA Mid, QA Junior, Trainer,
+  Desarrollo, Cliente UAT.
+- **Defectos**: viven en un módulo propio; la clave de Jira es opcional.
 
 ## Estructura de carpetas
 
 ```
 src/
 ├── app/                      # Rutas (App Router): layouts, páginas, metadata
+│   └── estilos/              # Sistema de diseño (solo desarrollo)
 ├── components/
 │   ├── ui/                   # shadcn/ui (generado)
-│   └── layout/               # Nav, footer, theme toggle
+│   ├── layout/               # Nav, footer, ThemeProvider, ThemeToggle
+│   └── qa/                   # Componentes compartidos de QA (StatusBadge)
 ├── features/
 │   └── proceso-qa/           # Mapa del proceso de QA
 │       ├── components/       # Componentes propios de la feature
 │       ├── data/             # Datos estáticos copiados de legacy/
 │       ├── lib/              # Lógica pura de la feature
 │       └── types.ts          # Tipos del dominio
-├── lib/                      # Utilidades compartidas (cn, etc.)
-└── server/                   # Acceso a datos (Prisma irá aquí en el paso 3)
+├── lib/                      # Utilidades compartidas (cn, qa-status)
+└── server/                   # Acceso a datos (Prisma)
 ```
 
 Cada nueva funcionalidad va en su propia carpeta dentro de `src/features/` con la misma forma.
@@ -106,3 +156,13 @@ Las rutas en `src/app/` son delgadas: componen piezas de `features/` y `componen
 - `npm run lint` · `npm run typecheck` (`next typegen && tsc --noEmit`: `next typegen` genera los tipos
   globales de rutas como `LayoutProps`, necesarios en un checkout limpio antes del build)
 - `npm run format` · `npm run format:check`
+
+## Dependencias
+
+- `shadcn` está en devDependencies: solo se usa como CLI y por el `@import "shadcn/tailwind.css"` que se
+  resuelve al compilar.
+- **braces** (GHSA-vfj7-8cjw-p6xm, alta): llega por `shadcn` y `eslint-config-next` → `fast-glob` →
+  `micromatch`. La advisory afecta a `<=3.0.3` y 3.0.3 es la última versión publicada, así que no hay
+  versión corregida para un `overrides`. Solo afecta a herramientas de desarrollo (`npm audit --omit=dev`
+  da 0). No uses `npm audit fix --force`: propone downgrades mayores. Revisa de nuevo cuando salga una
+  versión corregida y agrega el override entonces.
